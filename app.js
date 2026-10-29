@@ -24,8 +24,9 @@ async function onScan() {
   scanBtn.textContent = "Scanning…";
 
   try {
-    const result = await scanTerms(text);
-    renderResults(result);
+    const clauses = await scanTerms(text);
+    const verdict = computeVerdict(clauses);
+    renderResults({ verdict, clauses });
     inputView.classList.add("view--hidden");
     resultsView.classList.remove("view--hidden");
   } catch (err) {
@@ -44,12 +45,8 @@ function onReset() {
 }
 
 /**
- * Calls the backend endpoint that runs the single LLM call responsible for
- * extraction, severity classification, plain-English explanation, and
- * suggested actions (see brainstorm-intent.md: Core User Flow / Scope
- * Boundaries). The exact request/response schema is an open decision for
- * bmad-spec / bmad-build to pin down — /api/scan.js currently returns
- * placeholder data so the UI can be built and demoed end-to-end first.
+ * Calls the serverless Analysis Call endpoint (SPEC.md CAP-2) and returns
+ * the structured clause array.
  */
 async function scanTerms(text) {
   const response = await fetch("/api/scan", {
@@ -62,11 +59,29 @@ async function scanTerms(text) {
     throw new Error(`Scan request failed: ${response.status}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  return data.clauses;
+}
+
+const VERDICT = {
+  RECONSIDER: "Reconsider",
+  CAUTION: "Proceed with Caution",
+  PROCEED: "Proceed",
+};
+
+/** SPEC.md CAP-3 verdict logic. */
+function computeVerdict(clauses) {
+  const criticalCount = clauses.filter((c) => c.severity === "critical").length;
+  const cautionCount = clauses.filter((c) => c.severity === "caution").length;
+
+  if (criticalCount >= 2) return VERDICT.RECONSIDER;
+  if (criticalCount === 1 || cautionCount >= 2) return VERDICT.CAUTION;
+  return VERDICT.PROCEED;
 }
 
 function renderResults({ verdict, clauses }) {
   verdictEl.textContent = verdict;
+  verdictEl.className = `verdict verdict--${verdictClass(verdict)}`;
 
   clauseGroupsEl.innerHTML = "";
 
@@ -94,22 +109,33 @@ function renderClauseCard(clause, severity) {
   const card = document.createElement("div");
   card.className = `clause-card clause-card--${severity}`;
 
+  const badge = document.createElement("span");
+  badge.className = `clause-card__badge clause-card__badge--${severity}`;
+  badge.textContent = SEVERITY_LABEL[severity];
+  card.appendChild(badge);
+
   const quote = document.createElement("p");
   quote.className = "clause-card__quote";
-  quote.textContent = `"${clause.quote}"`;
+  quote.textContent = `"${clause.clause_text}"`;
   card.appendChild(quote);
 
   const explanation = document.createElement("p");
   explanation.className = "clause-card__explanation";
-  explanation.textContent = clause.explanation;
+  explanation.textContent = clause.consequence;
   card.appendChild(explanation);
 
-  if (clause.action) {
+  if (clause.suggested_action) {
     const action = document.createElement("p");
     action.className = "clause-card__action";
-    action.textContent = `Suggested action: ${clause.action}`;
+    action.textContent = `Suggested action: ${clause.suggested_action}`;
     card.appendChild(action);
   }
 
   return card;
+}
+
+function verdictClass(verdict) {
+  if (verdict === VERDICT.RECONSIDER) return "reconsider";
+  if (verdict === VERDICT.CAUTION) return "caution";
+  return "proceed";
 }

@@ -32,7 +32,7 @@ Nobody reads Terms & Conditions before agreeing to them — they're long, dense,
 
 ## Constraints
 
-- No backend: the static page calls the LLM API directly from client-side JavaScript. The API key is hardcoded/embedded in client code — acceptable only because this is a throwaway, non-public demo deployment, never a pattern to carry forward. This supersedes the previously scaffolded `api/scan.js` Vercel serverless proxy; the build removes or bypasses it.
+- The repo is public on GitHub, so the LLM API key cannot be embedded in client-side code — it would be scraped within minutes. The Vercel serverless function (`api/scan.js`) proxies the Analysis Call; the key lives only as a Vercel environment variable, never committed or shipped to the browser. This reverses the spec's original no-backend assumption (see Assumptions).
 - No authentication, no database, no persistence of submitted text or results across sessions or page reloads.
 - Input is paste-text only — no URL fetch, no file upload.
 - Blocking check on submission is "non-empty text only" — no minimum length/character threshold.
@@ -46,7 +46,7 @@ Nobody reads Terms & Conditions before agreeing to them — they're long, dense,
 - No live checkout/point-of-purchase interception or browser extension in v1 — user pastes text ahead of time.
 - No user accounts, saved history, or multi-document comparison.
 - No truncation or warning behavior for very long pasted documents — left to whatever the LLM provider's context limit naturally allows.
-- Production-grade API key security is explicitly out of scope — see Constraints.
+- Production-grade API key security is explicitly out of scope beyond keeping the key server-side via the Vercel env var — see Constraints.
 
 ## Success signal
 
@@ -58,9 +58,9 @@ Live demo: a real (not mocked) T&Cs document, pasted during a 5-minute demo slot
 - Caution-only verdict threshold is 2+ Caution clauses with 0 Critical (resolves PRD open question 2, confirming the PRD's inferred rule).
 - Analysis Call JSON response shape is an array of `{clause_text, severity, consequence, suggested_action}` objects, with no separate verdict field from the LLM (resolves PRD open question 3).
 - Visual design reuses the dark theme and severity color palette from the (now-removed) `clauseguard-pitch.html` brainstorming artifact rather than being designed fresh — see `visual-design.md` (resolves PRD open question 4).
-- The committed `api/scan.js` Vercel function scaffold is superseded by the no-backend, direct-client-call architecture confirmed for this spec and will need removal or bypass during build.
+- Architecture reversed from the original no-backend assumption: given the public repo, `api/scan.js` is kept as a real Vercel serverless proxy, with the LLM key as a Vercel environment variable rather than embedded client-side.
+- LLM provider is Anthropic Claude (`claude-sonnet-latest`) via the Deloitte Pulse gateway (`ANTHROPIC_BASE_URL=https://pulse.deloitte.com`), configured through Vercel env vars `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`, `ANTHROPIC_AUTH_TOKEN`.
 
 ## Open Questions
 
-- Which LLM provider/model and exact prompt text will perform the Analysis Call — not yet designed, needed before implementation.
-- Where exactly the hardcoded demo API key is stored in client code, and which provider's key format that implies.
+None — all four original open questions and the architecture question are resolved; see Assumptions.
