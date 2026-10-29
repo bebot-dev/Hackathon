@@ -227,6 +227,12 @@ body {
   background: var(--bg-subtle);
 }
 
+.input-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .char-count {
   font-size: 0.75rem;
   color: var(--text-dim);

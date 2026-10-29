@@ -6,6 +6,7 @@ const charCountEl = document.getElementById("char-count");
 const scanBtn = document.getElementById("scan-btn");
 const scanErrorEl = document.getElementById("scan-error");
 const resetLink = document.getElementById("reset-link");
+const loadDemoBtn = document.getElementById("load-demo-btn");
 const newAnalysisBtn = document.getElementById("new-analysis-btn");
 const verdictBanner = document.getElementById("verdict-banner");
 const verdictIconEl = document.getElementById("verdict-icon");
@@ -54,6 +55,24 @@ tcInput.addEventListener("input", onInputChange);
 scanBtn.addEventListener("click", onScan);
 resetLink.addEventListener("click", onReset);
 newAnalysisBtn.addEventListener("click", onReset);
+loadDemoBtn.addEventListener("click", onLoadDemo);
+
+async function onLoadDemo() {
+  hideScanError();
+  loadDemoBtn.disabled = true;
+  try {
+    const response = await fetch("/OmniLife Terms of Service.txt");
+    if (!response.ok) throw new Error(`Failed to load demo text: ${response.status}`);
+    tcInput.value = await response.text();
+    onInputChange();
+    tcInput.focus();
+  } catch (err) {
+    console.error(err);
+    showScanError("Couldn't load the demo document. Please try again.");
+  } finally {
+    loadDemoBtn.disabled = false;
+  }
+}
 
 function onInputChange() {
   const length = tcInput.value.length;
