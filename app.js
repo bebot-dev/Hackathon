@@ -24,9 +24,9 @@ async function onScan() {
   scanBtn.textContent = "Scanning…";
 
   try {
-    const clauses = await scanTerms(text);
+    const { clauses, truncated } = await scanTerms(text);
     const verdict = computeVerdict(clauses);
-    renderResults({ verdict, clauses });
+    renderResults({ verdict, clauses, truncated });
     inputView.classList.add("view--hidden");
     resultsView.classList.remove("view--hidden");
   } catch (err) {
@@ -59,8 +59,7 @@ async function scanTerms(text) {
     throw new Error(`Scan request failed: ${response.status}`);
   }
 
-  const data = await response.json();
-  return data.clauses;
+  return response.json();
 }
 
 const VERDICT = {
@@ -79,11 +78,19 @@ function computeVerdict(clauses) {
   return VERDICT.PROCEED;
 }
 
-function renderResults({ verdict, clauses }) {
+function renderResults({ verdict, clauses, truncated }) {
   verdictEl.textContent = verdict;
   verdictEl.className = `verdict verdict--${verdictClass(verdict)}`;
 
   clauseGroupsEl.innerHTML = "";
+
+  if (truncated) {
+    const notice = document.createElement("p");
+    notice.className = "truncation-notice";
+    notice.textContent =
+      "This document was long enough that analysis may be incomplete — some clauses past this point may not have been reviewed.";
+    clauseGroupsEl.appendChild(notice);
+  }
 
   for (const severity of SEVERITY_ORDER) {
     const group = clauses.filter((c) => c.severity === severity);

@@ -131,6 +131,16 @@ button:hover:not(:disabled) {
   background: var(--critical-bg);
 }
 
+.truncation-notice {
+  font-size: 0.85rem;
+  color: var(--caution);
+  background: var(--caution-bg);
+  border: 1px solid var(--caution-border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .clause-group {
   margin-bottom: 1.5rem;
 }

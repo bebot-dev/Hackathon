@@ -45,13 +45,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const clauses = await runAnalysisCall(text);
-    res.status(200).json({ clauses });
+    const { clauses, truncated } = await runAnalysisCall(text);
+    res.status(200).json({ clauses, truncated });
   } catch (err) {
     console.error("Analysis Call failed:", err);
     res.status(502).json({ error: "Analysis failed. Please try again." });
   }
 }
+
+// Clause count scales with how many notable clauses the document contains,
+// not just its length — a long but repetitive document needs little more
+// output than a short, dense one. 16000 comfortably covers real-world T&Cs
+// (tested against a 38-clause dense document that truncated at 4096).
+const MAX_OUTPUT_TOKENS = 16000;
 
 async function runAnalysisCall(text) {
   const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
@@ -63,7 +69,7 @@ async function runAnalysisCall(text) {
     },
     body: JSON.stringify({
       model: ANTHROPIC_MODEL,
-      max_tokens: 4096,
+      max_tokens: MAX_OUTPUT_TOKENS,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: text }],
     }),
@@ -80,20 +86,78 @@ async function runAnalysisCall(text) {
     .map((block) => block.text)
     .join("");
 
-  return parseClauses(rawText);
+  const hitTokenLimit = data.stop_reason === "max_tokens";
+  const clauses = parseClauses(rawText);
+
+  return { clauses, truncated: hitTokenLimit };
 }
 
 function parseClauses(rawText) {
-  const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
+  const startIdx = rawText.indexOf("[");
+  if (startIdx === -1) {
     throw new Error("Could not find a JSON array in the model response");
   }
+  const fromArrayStart = rawText.slice(startIdx);
 
-  const parsed = JSON.parse(jsonMatch[0]);
-  if (!Array.isArray(parsed)) {
-    throw new Error("Model response JSON was not an array");
+  // Fast path: a complete, well-formed array.
+  const closeIdx = fromArrayStart.lastIndexOf("]");
+  if (closeIdx !== -1) {
+    try {
+      const parsed = JSON.parse(fromArrayStart.slice(0, closeIdx + 1));
+      if (Array.isArray(parsed)) return normalizeClauses(parsed);
+    } catch {
+      // Fall through — treat as truncated and try to salvage below.
+    }
   }
 
+  // Slow path: the response was cut off mid-array (hit the token limit, or
+  // an odd closing bracket showed up inside a quoted value above). Salvage
+  // every clause object that completed before the cutoff rather than
+  // discarding the whole result.
+  const salvaged = salvageClauseObjects(fromArrayStart);
+  if (salvaged.length > 0) return normalizeClauses(salvaged);
+
+  throw new Error("Could not parse any clauses from the model response");
+}
+
+/** Scans for complete top-level `{...}` objects, string-aware so braces inside quoted values don't throw off bracket depth. Drops any trailing object left incomplete by truncation. */
+function salvageClauseObjects(text) {
+  const objects = [];
+  let depth = 0;
+  let objStart = -1;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      if (depth === 0) objStart = i;
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0 && objStart !== -1) {
+        try {
+          objects.push(JSON.parse(text.slice(objStart, i + 1)));
+        } catch {
+          // Malformed fragment — skip it, keep the rest.
+        }
+        objStart = -1;
+      }
+    }
+  }
+
+  return objects;
+}
+
+function normalizeClauses(parsed) {
   const validSeverities = new Set(["critical", "caution", "standard"]);
   return parsed
     .filter((c) => c && typeof c.clause_text === "string" && validSeverities.has(c.severity))
