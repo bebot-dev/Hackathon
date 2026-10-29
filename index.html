@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClauseGuard — Know what you're agreeing to</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>ClauseGuard</h1>
+      <p class="tagline">Paste any Terms &amp; Conditions. See what actually matters.</p>
+    </header>
+
+    <section id="input-view" class="view">
+      <textarea
+        id="tc-input"
+        placeholder="Paste Terms &amp; Conditions text here…"
+      ></textarea>
+      <button id="scan-btn" type="button">Scan</button>
+    </section>
+
+    <section id="results-view" class="view view--hidden">
+      <div id="verdict" class="verdict"></div>
+      <div id="clause-groups" class="clause-groups"></div>
+      <button id="reset-btn" type="button">Scan another</button>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

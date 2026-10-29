@@ -1,0 +1,9 @@
+{
+  "name": "clauseguard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Paste any Terms & Conditions and see what actually matters, flagged by severity.",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

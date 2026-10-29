@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClauseGuard — Pitch</title>
+<style>
+  :root{
+    --bg:#090c12;
+    --bg-2:#0d1119;
+    --surface:#121825;
+    --surface-2:#182032;
+    --border:#263049;
+    --text:#eef1f7;
+    --text-dim:#97a2b8;
+    --text-dimmer:#5f6b82;
+    --brand:#8b7cf6;
+    --brand-2:#34d6e0;
+    --critical:#ff5468;
+    --critical-bg:rgba(255,84,104,.12);
+    --critical-border:rgba(255,84,104,.35);
+    --caution:#f5a623;
+    --caution-bg:rgba(245,166,35,.12);
+    --caution-border:rgba(245,166,35,.35);
+    --standard:#36d399;
+    --standard-bg:rgba(54,211,153,.12);
+    --standard-border:rgba(54,211,153,.35);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    overflow:hidden;
+  }
+
+  ::selection{ background:var(--brand); color:#fff; }
+
+  .deck{
+    height:100vh;
+    overflow-y:scroll;
+    overflow-x:hidden;
+    scroll-snap-type:y mandatory;
+    scroll-behavior:smooth;
+  }
+  .deck::-webkit-scrollbar{ display:none; }
+
+  .slide{
+    height:100vh;
+    width:100%;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:48px 64px;
+    background:
+      radial-gradient(900px 500px at 15% 0%, rgba(139,124,246,.10), transparent 60%),
+      radial-gradient(900px 600px at 100% 100%, rgba(52,214,224,.08), transparent 55%),
+      var(--bg);
+  }
+
+  .eyebrow{
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--brand-2);
+    margin-bottom:14px;
+    opacity:0;
+  }
+  .slide.active .eyebrow{ animation:riseIn .55s ease forwards; }
+
+  h1,h2,h3{ margin:0; }
+  h1{
+    font-size:clamp(34px,5vw,58px);
+    font-weight:800;
+    letter-spacing:-.02em;
+    line-height:1.08;
+    max-width:980px;
+    opacity:0;
+  }
+  .slide.active h1{ animation:riseIn .6s .05s ease forwards; }
+
+  h2{
+    font-size:clamp(26px,3.4vw,40px);
+    font-weight:800;
+    letter-spacing:-.015em;
+    max-width:900px;
+    opacity:0;
+  }
+  .slide.active h2{ animation:riseIn .6s .05s ease forwards; }
+
+  .sub{
+    font-size:clamp(15px,1.5vw,19px);
+    color:var(--text-dim);
+    max-width:640px;
+    line-height:1.55;
+    margin-top:18px;
+    opacity:0;
+  }
+  .slide.active .sub{ animation:riseIn .6s .15s ease forwards; }
+
+  @keyframes riseIn{
+    from{ opacity:0; transform:translateY(16px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* ---------- nav dots ---------- */
+  .nav-dots{
+    position:fixed;
+    right:26px;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    z-index:50;
+  }
+  .nav-dots button{
+    width:9px; height:9px;
+    border-radius:50%;
+    border:1.5px solid var(--text-dimmer);
+    background:transparent;
+    padding:0;
+    cursor:pointer;
+    transition:all .25s ease;
+  }
+  .nav-dots button.active{
+    background:linear-gradient(135deg,var(--brand),var(--brand-2));
+    border-color:transparent;
+    transform:scale(1.35);
+    box-shadow:0 0 0 4px rgba(139,124,246,.15);
+  }
+
+  .progress{
+    position:fixed;
+    top:26px;
+    right:30px;
+    font-size:12px;
+    letter-spacing:.08em;
+    color:var(--text-dimmer);
+    font-variant-numeric:tabular-nums;
+    z-index:50;
+  }
+  .progress b{ color:var(--text); }
+
+  .brandmark{
+    position:fixed;
+    top:26px;
+    left:32px;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.02em;
+    color:var(--text-dim);
+    z-index:50;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .brandmark .shield{ font-size:14px; }
+
+  .scroll-hint{
+    position:fixed;
+    bottom:26px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:12px;
+    color:var(--text-dimmer);
+    letter-spacing:.04em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    z-index:50;
+    transition:opacity .4s ease;
+  }
+  .scroll-hint .chev{ animation:bob 1.6s ease-in-out infinite; }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(4px); }
+  }
+  .scroll-hint.hidden{ opacity:0; pointer-events:none; }
+
+  /* ---------- shared bits ---------- */
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:10.5px;
+    font-weight:800;
+    letter-spacing:.06em;
+    padding:4px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .badge-critical{ background:var(--critical-bg); color:var(--critical); border:1px solid var(--critical-border); }
+  .badge-caution{ background:var(--caution-bg); color:var(--caution); border:1px solid var(--caution-border); }
+  .badge-standard{ background:var(--standard-bg); color:var(--standard); border:1px solid var(--standard-border); }
+
+  .pulse-dot{
+    width:6px; height:6px; border-radius:50%; background:currentColor;
+    animation:pulseDot 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%,100%{ box-shadow:0 0 0 0 currentColor; opacity:1; }
+    50%{ box-shadow:0 0 0 4px transparent; opacity:.55; }
+  }
+
+  /* ================= SLIDE 1 — PROBLEM ================= */
+  .fineprint-mock{
+    margin-top:40px;
+    width:min(560px,86vw);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:26px 26px 22px;
+    position:relative;
+    opacity:0;
+    filter:blur(0);
+  }
+  .slide.active #s1 .fineprint-mock{ animation:riseIn .7s .2s ease forwards; }
+  .fp-line{ height:8px; border-radius:4px; background:#232c40; margin-bottom:10px; }
+  .fp-line.w1{ width:92%; } .fp-line.w2{ width:78%; } .fp-line.w3{ width:85%; }
+  .fp-line.hot{
+    background:linear-gradient(90deg,var(--critical),#ff8a9a);
+    position:relative;
+    box-shadow:0 0 14px rgba(255,84,104,.45);
+  }
+  .fp-line.w4{ width:65%; } .fp-line.w5{ width:88%; } .fp-line.w6{ width:72%; }
+  .fp-tag{
+    position:absolute; right:22px; top:84px;
+    font-size:10px; font-weight:800; letter-spacing:.06em;
+    color:var(--critical);
+    background:var(--critical-bg);
+    border:1px solid var(--critical-border);
+    padding:3px 8px; border-radius:20px;
+    animation:flagPop 2.4s ease-in-out infinite;
+  }
+  @keyframes flagPop{
+    0%,100%{ transform:translateY(0); opacity:1; }
+    50%{ transform:translateY(-3px); opacity:.75; }
+  }
+  .agree-row{
+    margin-top:18px; display:flex; justify-content:flex-end; gap:10px;
+  }
+  .agree-btn{
+    background:linear-gradient(135deg,#3d4663,#2a3249);
+    color:var(--text-dim);
+    border:1px solid var(--border);
+    padding:9px 22px;
+    border-radius:9px;
+    font-weight:700;
+    font-size:13px;
+  }
+  .agree-btn.primary{
+    background:linear-gradient(135deg,var(--brand),#6c5ce7);
+    color:#fff;
+    border:none;
+  }
+
+  /* ================= SLIDE 2 — IDEA ================= */
+  .logo-row{
+    display:flex; align-items:center; gap:16px;
+    opacity:0;
+  }
+  .slide.active #s2 .logo-row{ animation:riseIn .65s .05s ease forwards; }
+  .logo-shield{
+    width:58px; height:58px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px;
+    border-radius:16px;
+    background:linear-gradient(135deg,rgba(139,124,246,.22),rgba(52,214,224,.18));
+    border:1px solid rgba(139,124,246,.4);
+  }
+  .logo-text{
+    font-size:clamp(40px,6vw,66px);
+    font-weight:900;
+    letter-spacing:-.03em;
+    background:linear-gradient(135deg,#fff 20%,var(--brand-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .legend-row{
+    margin-top:34px;
+    display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
+    opacity:0;
+  }
+  .slide.active #s2 .legend-row{ animation:riseIn .6s .3s ease forwards; }
+  .legend-chip{
+    display:flex; align-items:center; gap:7px;
+    font-size:13px; font-weight:700;
+    padding:8px 14px; border-radius:30px;
+    background:var(--surface); border:1px solid var(--border);
+  }
+
+  /* ================= BROWSER MOCK FRAME ================= */
+  .browser{
+    width:min(720px,90vw);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.6);
+    opacity:0;
+    transform:translateY(22px) scale(.98);
+  }
+  .slide.active .browser{ animation:browserIn .7s .15s cubic-bezier(.2,.8,.2,1) forwards; }
+  @keyframes browserIn{
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  .browser-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--border);
+  }
+  .browser-dot{ width:9px; height:9px; border-radius:50%; }
+  .bd-r{ background:#ff5f57; } .bd-y{ background:#febc2e; } .bd-g{ background:#28c840; }
+  .browser-url{
+    margin-left:10px;
+    font-size:11.5px;
+    color:var(--text-dimmer);
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:4px 12px;
+    flex:1;
+    max-width:260px;
+  }
+  .browser-body{ padding:26px 26px 24px; position:relative; min-height:300px; }
+
+  .app-head{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;
+  }
+  .app-title{ display:flex; align-items:center; gap:8px; font-weight:800; font-size:14.5px; }
+  .app-title .shield{ font-size:15px; }
+  .app-step{
+    font-size:10.5px; color:var(--text-dimmer); letter-spacing:.06em; font-weight:700;
+  }
+
+  /* ---- input mockup ---- */
+  .paste-area{
+    background:var(--bg-2);
+    border:1.5px dashed var(--border);
+    border-radius:10px;
+    padding:18px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12.5px;
+    line-height:1.7;
+    color:var(--text-dim);
+    min-height:150px;
+    position:relative;
+  }
+  .paste-area .faded{ color:var(--text-dimmer); }
+  .caret{
+    display:inline-block; width:2px; height:13px;
+    background:var(--brand-2);
+    margin-left:1px; vertical-align:-2px;
+    animation:blink 1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  .scan-btn{
+    margin-top:18px;
+    display:inline-flex; align-items:center; gap:9px;
+    background:linear-gradient(135deg,var(--brand),#6c5ce7);
+    color:#fff; border:none;
+    font-weight:800; font-size:13.5px;
+    padding:12px 22px;
+    border-radius:10px;
+    cursor:pointer;
+    box-shadow:0 10px 26px -8px rgba(139,124,246,.65);
+    animation:btnPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes btnPulse{
+    0%,100%{ box-shadow:0 10px 26px -8px rgba(139,124,246,.65); }
+    50%{ box-shadow:0 10px 32px -4px rgba(139,124,246,.95); }
+  }
+  .scan-btn:active{ transform:scale(.97); }
+  .scan-hint{ margin-top:10px; font-size:11.5px; color:var(--text-dimmer); }
+
+  .scan-sweep{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg,transparent 0%, rgba(52,214,224,.16) 45%, rgba(52,214,224,.35) 50%, rgba(52,214,224,.16) 55%, transparent 100%);
+    transform:translateY(-100%);
+    pointer-events:none;
+    border-radius:10px;
+  }
+  .browser-body.sweeping .scan-sweep{ animation:sweepDown 1.1s ease-in-out; }
+  @keyframes sweepDown{
+    0%{ transform:translateY(-100%); opacity:1; }
+    100%{ transform:translateY(100%); opacity:.3; }
+  }
+  .toast{
+    position:absolute; left:50%; bottom:-14px;
+    transform:translate(-50%,0);
+    background:var(--standard-bg);
+    border:1px solid var(--standard-border);
+    color:var(--standard);
+    font-size:12px; font-weight:700;
+    padding:7px 14px; border-radius:20px;
+    opacity:0;
+    white-space:nowrap;
+  }
+  .toast.show{ animation:toastPop 2.2s ease forwards; }
+  @keyframes toastPop{
+    0%{ opacity:0; transform:translate(-50%,6px); }
+    15%{ opacity:1; transform:translate(-50%,-4px); }
+    80%{ opacity:1; transform:translate(-50%,-4px); }
+    100%{ opacity:0; transform:translate(-50%,-10px); }
+  }
+
+  /* ---- results mockup ---- */
+  .summary-strip{
+    display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+  }
+  .sum-chip{
+    font-size:11.5px; font-weight:800; padding:6px 12px; border-radius:20px;
+    display:flex; align-items:center; gap:6px;
+  }
+
+  .group-head{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:800; letter-spacing:.05em;
+    text-transform:uppercase;
+    margin:16px 0 9px;
+  }
+  .group-head:first-child{ margin-top:0; }
+  .group-head.g-critical{ color:var(--critical); }
+  .group-head.g-caution{ color:var(--caution); }
+  .group-head.g-standard{ color:var(--standard); }
+
+  .clause-card{
+    background:var(--bg-2);
+    border:1px solid var(--border);
+    border-left:3px solid transparent;
+    border-radius:9px;
+    padding:12px 14px;
+    margin-bottom:9px;
+    opacity:0;
+    transform:translateY(10px);
+  }
+  .slide.active .clause-card{ animation:cardIn .5s cubic-bezier(.2,.8,.2,1) forwards; }
+  .clause-card.cc-critical{ border-left-color:var(--critical); }
+  .clause-card.cc-caution{ border-left-color:var(--caution); }
+  .clause-card.cc-standard{ border-left-color:var(--standard); }
+  @keyframes cardIn{ to{ opacity:1; transform:translateY(0); } }
+
+  .cc-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .cc-quote{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:11.5px; line-height:1.55;
+    color:var(--text);
+    font-style:italic;
+  }
+  .cc-why{
+    font-size:11.5px; color:var(--text-dim); line-height:1.5;
+    display:flex; gap:6px; align-items:flex-start;
+  }
+  .cc-why .ico{ flex:0 0 auto; }
+
+  .badge.flash{ animation:badgeFlash .5s ease forwards; }
+  @keyframes badgeFlash{
+    0%{ filter:brightness(2.4) saturate(0); transform:scale(.85); }
+    100%{ filter:brightness(1) saturate(1); transform:scale(1); }
+  }
+  .badge-critical.throb{ animation:badgeThrob 1.8s ease-in-out infinite; }
+  @keyframes badgeThrob{
+    0%,100%{ box-shadow:0 0 0 0 rgba(255,84,104,.5); }
+    50%{ box-shadow:0 0 0 5px rgba(255,84,104,0); }
+  }
+
+  /* stagger delays */
+  .clause-card:nth-child(1){ animation-delay:.05s; }
+  .clause-card:nth-child(2){ animation-delay:.18s; }
+  .clause-card:nth-child(3){ animation-delay:.31s; }
+  .clause-card:nth-child(4){ animation-delay:.44s; }
+  .clause-card:nth-child(5){ animation-delay:.57s; }
+
+  /* ================= SLIDE 5 — WHY ================= */
+  .why-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:18px;
+    margin-top:34px; width:min(1000px,92vw);
+  }
+  .why-card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:22px 20px;
+    opacity:0; transform:translateY(14px);
+  }
+  .slide.active .why-card{ animation:cardIn .55s cubic-bezier(.2,.8,.2,1) forwards; }
+  .why-card:nth-child(1){ animation-delay:.15s; }
+  .why-card:nth-child(2){ animation-delay:.28s; }
+  .why-card:nth-child(3){ animation-delay:.41s; }
+  .why-ico{ font-size:24px; margin-bottom:12px; }
+  .why-card h3{ font-size:16px; font-weight:800; margin-bottom:8px; }
+  .why-card p{ font-size:13px; color:var(--text-dim); line-height:1.55; margin:0; }
+
+  /* ================= SLIDE 6 — BUILDABLE ================= */
+  .pipeline{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    justify-content:center;
+    margin-top:30px;
+    opacity:0;
+  }
+  .slide.active #s6 .pipeline{ animation:riseIn .6s .2s ease forwards; }
+  .pipe-step{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:14px 18px;
+    font-size:13px; font-weight:700;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    min-width:140px; text-align:center;
+  }
+  .pipe-step span.tag{ font-size:10px; color:var(--text-dimmer); font-weight:700; letter-spacing:.05em; }
+  .pipe-arrow{ color:var(--text-dimmer); font-size:18px; }
+
+  .hours-row{
+    display:flex; gap:10px; margin-top:30px; flex-wrap:wrap; justify-content:center;
+    width:min(900px,94vw);
+    opacity:0;
+  }
+  .slide.active #s6 .hours-row{ animation:riseIn .6s .35s ease forwards; }
+  .hour-chip{
+    background:var(--bg-2); border:1px solid var(--border);
+    border-radius:10px; padding:10px 14px; flex:1; min-width:140px;
+    font-size:12px;
+  }
+  .hour-chip b{ display:block; color:var(--brand-2); font-size:11px; margin-bottom:3px; }
+
+  .closing-line{
+    margin-top:30px; font-size:14.5px; color:var(--text-dim);
+    opacity:0;
+  }
+  .slide.active #s6 .closing-line{ animation:riseIn .6s .5s ease forwards; }
+  .closing-line b{ color:var(--text); }
+
+  @media (max-width:760px){
+    .slide{ padding:32px 24px; }
+    .why-grid{ grid-template-columns:1fr; }
+    .nav-dots{ right:12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="brandmark"><span class="shield">🛡️</span> ClauseGuard</div>
+<div class="progress"><b id="prog-cur">01</b> / 06</div>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1 : PROBLEM -->
+  <section class="slide" id="s1">
+    <div class="eyebrow">The problem</div>
+    <h1>Nobody reads the fine print.<br>The fine print counts on it.</h1>
+    <p class="sub">Data selling. Forced arbitration. Auto-renewal traps. Buried liability waivers.<br>They're all sitting in the T&amp;Cs you just clicked "Agree" on.</p>
+
+    <div class="fineprint-mock">
+      <div class="fp-line w1"></div>
+      <div class="fp-line w2"></div>
+      <div class="fp-line w3"></div>
+      <div class="fp-line hot"></div>
+      <div class="fp-tag">⚠ risky clause</div>
+      <div class="fp-line w4"></div>
+      <div class="fp-line w5"></div>
+      <div class="fp-line w6"></div>
+      <div class="agree-row">
+        <div class="agree-btn">Decline</div>
+        <div class="agree-btn primary">I Agree</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 : IDEA -->
+  <section class="slide" id="s2">
+    <div class="eyebrow">The idea</div>
+    <div class="logo-row">
+      <div class="logo-shield">🛡️</div>
+      <div class="logo-text">ClauseGuard</div>
+    </div>
+    <p class="sub" style="text-align:center;max-width:620px;margin-left:auto;margin-right:auto;">
+      Paste any Terms &amp; Conditions. Get an instant, color-coded risk map of what you're actually agreeing to — before you click agree.
+    </p>
+    <div class="legend-row">
+      <div class="legend-chip"><span>🔴</span> Critical — the deal-breakers</div>
+      <div class="legend-chip"><span>🟡</span> Caution — read twice</div>
+      <div class="legend-chip"><span>🟢</span> Standard — totally normal</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 : MOCKUP — INPUT -->
+  <section class="slide" id="s3">
+    <div class="eyebrow">The demo — step 1</div>
+    <h2>Paste it in.</h2>
+    <div class="browser" style="margin-top:28px;">
+      <div class="browser-bar">
+        <span class="browser-dot bd-r"></span><span class="browser-dot bd-y"></span><span class="browser-dot bd-g"></span>
+        <span class="browser-url">clauseguard.app</span>
+      </div>
+      <div class="browser-body" id="inputBody">
+        <div class="app-head">
+          <div class="app-title"><span class="shield">🛡️</span> ClauseGuard</div>
+          <div class="app-step">STEP 1 — PASTE</div>
+        </div>
+        <div class="paste-area">
+          <span class="faded">"We may collect, use, and share your personal information, including</span><br>
+          <span class="faded">browsing history and precise location, with third-party partners...</span><br>
+          <span class="faded">By accessing the Service you agree to resolve disputes through</span><br>
+          <span class="faded">binding arbitration and waive the right to a jury trial...</span><span class="caret"></span>
+        </div>
+        <button class="scan-btn" id="scanBtn">🔍 Scan for Risks</button>
+        <div class="scan-hint">Pasted from: a gym membership agreement, a streaming app, an apartment lease — anything.</div>
+        <div class="scan-sweep"></div>
+        <div class="toast" id="scanToast">✓ 13 clauses analyzed</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 : MOCKUP — RESULTS -->
+  <section class="slide" id="s4">
+    <div class="eyebrow">The demo — step 2</div>
+    <h2>See the risk, instantly.</h2>
+    <div class="browser" style="margin-top:22px;">
+      <div class="browser-bar">
+        <span class="browser-dot bd-r"></span><span class="browser-dot bd-y"></span><span class="browser-dot bd-g"></span>
+        <span class="browser-url">clauseguard.app/results</span>
+      </div>
+      <div class="browser-body">
+        <div class="app-head">
+          <div class="app-title"><span class="shield">🛡️</span> ClauseGuard</div>
+          <div class="app-step">STEP 2 — RESULTS</div>
+        </div>
+
+        <div class="summary-strip">
+          <span class="sum-chip badge-critical">🔴 3 Critical</span>
+          <span class="sum-chip badge-caution">🟡 2 Caution</span>
+          <span class="sum-chip badge-standard">🟢 8 Standard</span>
+        </div>
+
+        <div class="group-head g-critical">🔴 Critical</div>
+        <div class="clause-card cc-critical">
+          <div class="cc-top">
+            <span class="badge badge-critical throb flash"><span class="pulse-dot"></span>CRITICAL</span>
+          </div>
+          <div class="cc-quote">"We may sell or share your personal information with third-party partners for marketing purposes."</div>
+          <div class="cc-why"><span class="ico">💡</span>Your data can be sold — not just used.</div>
+        </div>
+        <div class="clause-card cc-critical">
+          <div class="cc-top">
+            <span class="badge badge-critical throb flash"><span class="pulse-dot"></span>CRITICAL</span>
+          </div>
+          <div class="cc-quote">"You agree to resolve all disputes through binding arbitration and waive the right to a jury trial or class action."</div>
+          <div class="cc-why"><span class="ico">💡</span>You give up your right to sue or join a class action.</div>
+        </div>
+
+        <div class="group-head g-caution">🟡 Caution</div>
+        <div class="clause-card cc-caution">
+          <div class="cc-top">
+            <span class="badge badge-caution flash">CAUTION</span>
+          </div>
+          <div class="cc-quote">"Subscription renews automatically unless cancelled 30 days in advance."</div>
+          <div class="cc-why"><span class="ico">💡</span>Miss a narrow window, get billed again.</div>
+        </div>
+
+        <div class="group-head g-standard">🟢 Standard</div>
+        <div class="clause-card cc-standard">
+          <div class="cc-top">
+            <span class="badge badge-standard flash">STANDARD</span>
+          </div>
+          <div class="cc-quote">"We may update these terms from time to time."</div>
+          <div class="cc-why"><span class="ico">💡</span>Normal clause, no concern.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 : WHY EXCITING -->
+  <section class="slide" id="s5">
+    <div class="eyebrow">Why it's clever</div>
+    <h2>An unreadable wall of legal text becomes a ranked risk map — in seconds.</h2>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-ico">⚡</div>
+        <h3>Demo magic, live</h3>
+        <p>Paste a real app's actual T&amp;Cs on stage and watch it get flagged in front of everyone. No canned data required.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-ico">🙋</div>
+        <h3>Everyone has this problem</h3>
+        <p>Every judge, every teammate agreed to something today without reading it. The pain is instantly relatable.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-ico">🔁</div>
+        <h3>One engine, infinite docs</h3>
+        <p>Leases, gym contracts, app updates, cookie policies — same pipeline, same payoff, every time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 : BUILDABLE IN 5 HOURS -->
+  <section class="slide" id="s6">
+    <div class="eyebrow">Why it's buildable</div>
+    <h2>5 hours. One LLM call. Zero backend.</h2>
+
+    <div class="pipeline">
+      <div class="pipe-step"><span class="tag">INPUT</span>Paste raw text</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="tag">ONE CALL</span>LLM extracts + classifies</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><span class="tag">OUTPUT</span>Static HTML/JS renders cards</div>
+    </div>
+
+    <div class="hours-row">
+      <div class="hour-chip"><b>HR 1</b>Skeleton UI + layout</div>
+      <div class="hour-chip"><b>HR 2</b>Prompt + severity schema</div>
+      <div class="hour-chip"><b>HR 3</b>Render grouped results</div>
+      <div class="hour-chip"><b>HR 4</b>Style, badges, animation</div>
+      <div class="hour-chip"><b>HR 5</b>Polish + demo script</div>
+    </div>
+
+    <p class="closing-line">No auth. No database. No server. <b>Just paste, scan, ship.</b></p>
+  </section>
+
+</div>
+
+<div class="nav-dots" id="navDots"></div>
+<div class="scroll-hint" id="scrollHint"><span>scroll or use ↓ / ↑</span><span class="chev">⌄</span></div>
+
+<script>
+(function(){
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var dotsWrap = document.getElementById('navDots');
+  var progEl = document.getElementById('prog-cur');
+  var hint = document.getElementById('scrollHint');
+  var current = 0;
+
+  slides.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.setAttribute('aria-label', 'Go to slide ' + (i+1));
+    if(i === 0) b.classList.add('active');
+    b.addEventListener('click', function(){ goTo(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function setActive(i){
+    if(i === current && slides[i].classList.contains('active')) return;
+    current = i;
+    slides.forEach(function(s, idx){
+      if(idx === i){ s.classList.add('active'); }
+      else { s.classList.remove('active'); }
+    });
+    dots.forEach(function(d, idx){ d.classList.toggle('active', idx === i); });
+    progEl.textContent = String(i+1).padStart(2,'0');
+  }
+
+  function goTo(i){
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides[i].scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting && entry.intersectionRatio >= 0.55){
+        var idx = slides.indexOf(entry.target);
+        setActive(idx);
+      }
+    });
+  }, { root: deck, threshold: [0.55] });
+  slides.forEach(function(s){ io.observe(s); });
+
+  window.addEventListener('keydown', function(e){
+    if(['ArrowDown','ArrowRight','PageDown',' '].indexOf(e.key) > -1){
+      e.preventDefault(); goTo(current + 1); hideHint();
+    } else if(['ArrowUp','ArrowLeft','PageUp'].indexOf(e.key) > -1){
+      e.preventDefault(); goTo(current - 1); hideHint();
+    }
+  });
+
+  function hideHint(){ hint.classList.add('hidden'); }
+  deck.addEventListener('wheel', hideHint, { once:true, passive:true });
+  deck.addEventListener('touchstart', hideHint, { once:true, passive:true });
+
+  // initial state
+  setActive(0);
+
+  // Scan button interaction on slide 3
+  var scanBtn = document.getElementById('scanBtn');
+  var inputBody = document.getElementById('inputBody');
+  var toast = document.getElementById('scanToast');
+  var scanning = false;
+  if(scanBtn){
+    scanBtn.addEventListener('click', function(){
+      if(scanning) return;
+      scanning = true;
+      inputBody.classList.add('sweeping');
+      scanBtn.textContent = '🔎 Scanning...';
+      setTimeout(function(){
+        toast.classList.remove('show');
+        void toast.offsetWidth;
+        toast.classList.add('show');
+      }, 450);
+      setTimeout(function(){
+        inputBody.classList.remove('sweeping');
+        scanBtn.textContent = '🔍 Scan for Risks';
+        scanning = false;
+      }, 1300);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

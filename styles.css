@@ -1,0 +1,121 @@
+:root {
+  --color-bg: #0f1115;
+  --color-surface: #171a21;
+  --color-text: #e8eaed;
+  --color-muted: #9aa0a6;
+  --color-critical: #e5484d;
+  --color-caution: #f5a623;
+  --color-standard: #3dd68c;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.app__header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.app__header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 2rem;
+}
+
+.tagline {
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.view--hidden {
+  display: none;
+}
+
+#tc-input {
+  width: 100%;
+  min-height: 260px;
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid #2a2e37;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+button {
+  display: block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.verdict {
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.clause-group {
+  margin-bottom: 1.5rem;
+}
+
+.clause-group__title {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  margin-bottom: 0.5rem;
+}
+
+.clause-card {
+  background: var(--color-surface);
+  border-left: 4px solid var(--color-standard);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.clause-card--critical {
+  border-left-color: var(--color-critical);
+}
+
+.clause-card--caution {
+  border-left-color: var(--color-caution);
+}
+
+.clause-card__quote {
+  font-style: italic;
+  color: var(--color-muted);
+  margin: 0 0 0.5rem;
+}
+
+.clause-card__explanation {
+  margin: 0 0 0.5rem;
+}
+
+.clause-card__action {
+  margin: 0;
+  font-size: 0.9rem;
+}
