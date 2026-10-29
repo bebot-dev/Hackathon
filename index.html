@@ -4,27 +4,112 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ClauseGuard — Know what you're agreeing to</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app">
-    <header class="app__header">
-      <h1>ClauseGuard</h1>
-      <p class="tagline">Paste any Terms &amp; Conditions. See what actually matters.</p>
+    <header class="site-header">
+      <div class="site-header__brand">
+        <span class="logo-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/></svg>
+        </span>
+        <span class="logo-wordmark">ClauseGuard</span>
+      </div>
+      <div class="site-header__meta">
+        <span class="badge badge--version">V1.0 HACKATHON BUILD</span>
+        <button id="reset-link" class="link-button" type="button">Reset</button>
+      </div>
     </header>
 
-    <section id="input-view" class="view">
-      <textarea
-        id="tc-input"
-        placeholder="Paste Terms &amp; Conditions text here…"
-      ></textarea>
-      <button id="scan-btn" type="button">Scan</button>
+    <section id="input-view" class="view" aria-live="polite">
+      <div class="hero">
+        <h1 class="hero__title">
+          <span class="hero__title-line hero__title-line--neutral">Don't sign your life away.</span>
+          <span class="hero__title-line hero__title-line--brand">Know what's inside.</span>
+        </h1>
+        <p class="hero__subcopy">
+          Paste any Terms &amp; Conditions or Privacy Policy below. ClauseGuard scans it for clauses
+          that actually matter and tells you, in plain English, what you're agreeing to.
+        </p>
+      </div>
+
+      <div class="input-card">
+        <div class="input-card__header">
+          <label for="tc-input" class="eyebrow">Paste raw T&amp;C text below</label>
+          <span id="char-count" class="char-count">0 characters</span>
+        </div>
+        <textarea
+          id="tc-input"
+          placeholder="Paste Terms &amp; Conditions text here…"
+        ></textarea>
+        <div class="input-card__footer">
+          <p class="privacy-note">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 118 0v4"/></svg>
+            Processed securely — your text is never stored.
+          </p>
+          <button id="scan-btn" class="btn btn--primary" type="button" disabled>
+            Analyze Agreement
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <p id="scan-error" class="scan-error view--hidden" role="alert"></p>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-card">
+          <span class="icon-badge icon-badge--red" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 20h20L12 3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.75" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <h3>Spot Traps</h3>
+          <p>Surfaces auto-renewals, liability waivers, and forced arbitration clauses before you agree to them.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon-badge icon-badge--amber" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+          </span>
+          <h3>Save Time</h3>
+          <p>Get a ranked verdict in seconds instead of reading pages of legal text yourself.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon-badge icon-badge--green" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 2.5-2.5 15.5 0 18"/></svg>
+          </span>
+          <h3>Plain English</h3>
+          <p>Every flagged clause comes with a plain-language explanation of what it actually means for you.</p>
+        </div>
+      </div>
     </section>
 
-    <section id="results-view" class="view view--hidden">
-      <div id="verdict" class="verdict"></div>
+    <section id="loading-view" class="view view--hidden" aria-live="polite">
+      <div class="loading-state">
+        <span class="loading-state__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </span>
+        <h2>Analyzing Document&hellip;</h2>
+        <p>Extracting key clauses and mapping risk profiles.</p>
+        <div class="skeleton-bars">
+          <div class="skeleton-bar skeleton-bar--1"></div>
+          <div class="skeleton-bar skeleton-bar--2"></div>
+          <div class="skeleton-bar skeleton-bar--3"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="results-view" class="view view--hidden" tabindex="-1" aria-live="polite">
+      <div id="verdict-banner" class="verdict-banner">
+        <span id="verdict-icon" class="verdict-banner__icon" aria-hidden="true"></span>
+        <div class="verdict-banner__body">
+          <span class="eyebrow eyebrow--inverse">Overall Recommendation</span>
+          <h2 id="verdict-headline" class="verdict-banner__headline"></h2>
+          <p id="verdict-text" class="verdict-banner__text"></p>
+        </div>
+        <button id="new-analysis-btn" class="btn btn--ghost" type="button">New Analysis</button>
+      </div>
+
       <div id="clause-groups" class="clause-groups"></div>
-      <button id="reset-btn" type="button">Scan another</button>
     </section>
   </main>
 

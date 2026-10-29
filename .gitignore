@@ -5,3 +5,4 @@ node_modules/
 .DS_Store
 .claude/scheduled_tasks.lock
 .claude/scheduled_tasks.json
+.env*
